@@ -4,11 +4,17 @@ import {
 } from "./src/storage/dados";
 
 import Manutencoes from "./src/screens/Manutencoes";
+
 import Despesas from "./src/screens/Despesas";
+
 import Configuracoes from "./src/screens/Configuracoes";
+
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
 import { StatusBar } from "expo-status-bar";
+
 import { useEffect, useMemo, useState } from "react";
+
 import {
   Alert,
   KeyboardAvoidingView,
@@ -26,13 +32,21 @@ const CHAVE_DADOS = "@cherie:combustivel";
 
 const cores = {
   fundo: "#100d0f",
+
   painel: "#1d1519",
+
   painelClaro: "#28191f",
+
   borda: "#54303c",
+
   cereja: "#b52f50",
+
   rosa: "#e7a2b1",
+
   texto: "#f5e9e8",
+
   suave: "#bda5ad",
+
   alerta: "#ffb1c1",
 };
 
@@ -43,42 +57,26 @@ function converterNumero(valor) {
 function formatarDinheiro(valor) {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
+
     currency: "BRL",
   }).format(valor || 0);
 }
 
 export default function App() {
-  if (tela === "configuracoes") {
-    return (
-      <Configuracoes
-        capacidadeInicial={capacidade}
-        aoVoltar={() => setTela("inicio")}
-        aoSalvar={async (novaCapacidade) => {
-          setCapacidade(novaCapacidade);
-
-          await salvarDados({
-            capacidade: novaCapacidade,
-            quilometragemAtual,
-            abastecimentos,
-          });
-
-          setTela("inicio");
-
-          Alert.alert("Configurações salvas", "A autonomia foi recalculada.");
-        }}
-      />
-    );
-  }
-
   const [tela, setTela] = useState("inicio");
+
   const [carregando, setCarregando] = useState(true);
 
   const [capacidade, setCapacidade] = useState(47);
+
   const [quilometragemAtual, setQuilometragemAtual] = useState("");
+
   const [abastecimentos, setAbastecimentos] = useState([]);
 
   const [km, setKm] = useState("");
+
   const [litros, setLitros] = useState("");
+
   const [valor, setValor] = useState("");
 
   useEffect(() => {
@@ -93,14 +91,17 @@ export default function App() {
         const dados = JSON.parse(dadosSalvos);
 
         setCapacidade(dados.capacidade || 47);
+
         setQuilometragemAtual(
           dados.quilometragemAtual ? String(dados.quilometragemAtual) : "",
         );
+
         setAbastecimentos(dados.abastecimentos || []);
       }
     } catch {
       Alert.alert(
         "Não foi possível carregar",
+
         "Os dados salvos não puderam ser lidos.",
       );
     } finally {
@@ -125,6 +126,7 @@ export default function App() {
 
     for (let indice = 1; indice < abastecimentos.length; indice++) {
       const anterior = abastecimentos[indice - 1];
+
       const atual = abastecimentos[indice];
 
       const distancia = atual.km - anterior.km;
@@ -155,6 +157,7 @@ export default function App() {
     const ultimo = abastecimentos[abastecimentos.length - 1];
 
     const kmAtualNumero = converterNumero(quilometragemAtual);
+
     const distancia = kmAtualNumero - ultimo.km;
 
     if (!Number.isFinite(distancia) || distancia < 0) {
@@ -162,25 +165,35 @@ export default function App() {
     }
 
     // Até conhecer o consumo real, usa uma margem conservadora.
+
     const consumoUsado = consumoMedio || 8;
+
     const litrosConsumidos = distancia / consumoUsado;
+
     const litrosRestantes = Math.max(0, capacidade - litrosConsumidos);
 
     // Reserva de segurança de 15% do tanque.
+
     const reserva = capacidade * 0.15;
+
     const litrosDisponiveis = Math.max(0, litrosRestantes - reserva);
 
     return {
       distancia,
+
       litrosRestantes,
+
       autonomiaSegura: litrosDisponiveis * consumoUsado,
+
       consumoUsado,
     };
   }, [abastecimentos, capacidade, consumoMedio, quilometragemAtual]);
 
   async function registrarAbastecimento() {
     const kmNumero = converterNumero(km);
+
     const litrosNumero = converterNumero(litros);
+
     const valorNumero = converterNumero(valor);
 
     if (
@@ -190,16 +203,20 @@ export default function App() {
     ) {
       Alert.alert(
         "Confira os dados",
+
         "Preencha quilometragem, litros e valor.",
       );
+
       return;
     }
 
     if (kmNumero < 0 || litrosNumero <= 0 || valorNumero <= 0) {
       Alert.alert(
         "Valores inválidos",
+
         "Os números precisam ser maiores que zero.",
       );
+
       return;
     }
 
@@ -208,25 +225,34 @@ export default function App() {
     if (ultimo && kmNumero <= ultimo.km) {
       Alert.alert(
         "Quilometragem inválida",
+
         `Informe um valor maior que ${ultimo.km} km.`,
       );
+
       return;
     }
 
     if (litrosNumero > capacidade + 2) {
       Alert.alert(
         "Confira os litros",
+
         "O valor informado parece maior que a capacidade do tanque.",
       );
+
       return;
     }
 
     const novoRegistro = {
       id: Date.now().toString(),
+
       km: kmNumero,
+
       litros: litrosNumero,
+
       valor: valorNumero,
+
       tanqueCheio: true,
+
       data: new Date().toISOString(),
     };
 
@@ -236,29 +262,40 @@ export default function App() {
 
     const despesaCombustivel = {
       id: `combustivel-${novoRegistro.id}`,
+
       descricao: `Abastecimento de ${litrosNumero.toFixed(1)} litros`,
+
       valor: valorNumero,
+
       categoria: "Combustível",
+
       data: novoRegistro.data,
     };
 
     await salvarDadosGerais({
       ...dadosGerais,
+
       despesas: [despesaCombustivel, ...dadosGerais.despesas],
     });
 
     setAbastecimentos(novaLista);
+
     setQuilometragemAtual(String(kmNumero));
 
     await salvarDados({
       capacidade,
+
       quilometragemAtual: kmNumero,
+
       abastecimentos: novaLista,
     });
 
     setKm("");
+
     setLitros("");
+
     setValor("");
+
     setTela("inicio");
 
     Alert.alert("Abastecimento registrado 🍒", "A estimativa foi atualizada.");
@@ -266,27 +303,34 @@ export default function App() {
 
   async function atualizarQuilometragem() {
     const numero = converterNumero(quilometragemAtual);
+
     const ultimo = abastecimentos[abastecimentos.length - 1];
 
     if (!Number.isFinite(numero) || numero < 0) {
       Alert.alert(
         "Quilometragem inválida",
+
         "Informe a quilometragem atual do carro.",
       );
+
       return;
     }
 
     if (ultimo && numero < ultimo.km) {
       Alert.alert(
         "Quilometragem inválida",
+
         `O valor não pode ser menor que ${ultimo.km} km.`,
       );
+
       return;
     }
 
     await salvarDados({
       capacidade,
+
       quilometragemAtual: numero,
+
       abastecimentos,
     });
 
@@ -298,15 +342,21 @@ export default function App() {
   function excluirRegistro(registro) {
     Alert.alert(
       "Excluir abastecimento?",
+
       `Registro de ${registro.litros.toFixed(1)} litros.`,
+
       [
         {
           text: "Cancelar",
+
           style: "cancel",
         },
+
         {
           text: "Excluir",
+
           style: "destructive",
+
           onPress: async () => {
             const novaLista = abastecimentos.filter(
               (item) => item.id !== registro.id,
@@ -316,7 +366,9 @@ export default function App() {
 
             await salvarDados({
               capacidade,
+
               quilometragemAtual,
+
               abastecimentos: novaLista,
             });
           },
@@ -351,7 +403,9 @@ export default function App() {
 
           await salvarDados({
             capacidade: novaCapacidade,
+
             quilometragemAtual,
+
             abastecimentos,
           });
 
@@ -436,6 +490,7 @@ export default function App() {
         <View style={styles.cabecalho}>
           <View>
             <Text style={styles.marca}>Chérie 🍒</Text>
+
             <Text style={styles.subtitulo}>Seu carro, seus cuidados.</Text>
           </View>
 
@@ -450,7 +505,9 @@ export default function App() {
 
         <View style={styles.carro}>
           <Text style={styles.rotulo}>MEU CARRO</Text>
+
           <Text style={styles.nomeCarro}>Citroën C3</Text>
+
           <Text style={styles.detalhes}>2011 · 1.4 · Gasolina</Text>
         </View>
 
@@ -607,35 +664,45 @@ const styles = StyleSheet.create({
 
   tela: {
     flex: 1,
+
     backgroundColor: cores.fundo,
   },
 
   conteudo: {
     padding: 22,
+
     paddingBottom: 50,
   },
 
   carregando: {
     margin: "auto",
+
     color: cores.texto,
   },
 
   cabecalho: {
     flexDirection: "row",
+
     alignItems: "center",
+
     justifyContent: "space-between",
+
     marginBottom: 25,
   },
 
   marca: {
     color: cores.texto,
+
     fontFamily: "Georgia",
+
     fontSize: 34,
   },
 
   subtitulo: {
     marginTop: 4,
+
     color: cores.suave,
+
     fontSize: 13,
   },
 
@@ -645,196 +712,279 @@ const styles = StyleSheet.create({
 
   carro: {
     padding: 24,
+
     borderWidth: 1,
+
     borderColor: cores.borda,
+
     borderRadius: 18,
+
     backgroundColor: cores.painelClaro,
   },
 
   rotulo: {
     marginBottom: 10,
+
     color: cores.rosa,
+
     fontSize: 10,
+
     letterSpacing: 2.5,
   },
 
   nomeCarro: {
     color: cores.texto,
+
     fontFamily: "Georgia",
+
     fontSize: 30,
   },
 
   detalhes: {
     marginTop: 8,
+
     color: cores.suave,
+
     fontSize: 13,
   },
 
   tituloSecao: {
     marginTop: 28,
+
     marginBottom: 13,
+
     color: cores.texto,
+
     fontFamily: "Georgia",
+
     fontSize: 21,
   },
 
   grade: {
     flexDirection: "row",
+
     gap: 12,
   },
 
   cartao: {
     flex: 1,
+
     minHeight: 145,
+
     padding: 17,
+
     borderWidth: 1,
+
     borderColor: "#412a33",
+
     borderRadius: 14,
+
     backgroundColor: cores.painel,
   },
 
   icone: {
     marginBottom: 15,
+
     fontSize: 23,
   },
 
   valorDestaque: {
     color: cores.texto,
+
     fontSize: 22,
+
     fontWeight: "600",
   },
 
   legenda: {
     marginTop: 7,
+
     color: cores.suave,
+
     fontSize: 11,
+
     lineHeight: 16,
   },
 
   alerta: {
     marginTop: 14,
+
     padding: 18,
+
     borderLeftWidth: 3,
+
     borderLeftColor: cores.cereja,
+
     borderRadius: 10,
+
     backgroundColor: "#25141a",
   },
 
   alertaTitulo: {
     color: cores.rosa,
+
     fontSize: 14,
+
     fontWeight: "600",
   },
 
   alertaTexto: {
     marginTop: 7,
+
     color: cores.suave,
+
     fontSize: 12,
+
     lineHeight: 19,
   },
 
   linhaAtualizacao: {
     flexDirection: "row",
+
     gap: 10,
   },
 
   campoAtualizacao: {
     flex: 1,
+
     padding: 14,
+
     borderWidth: 1,
+
     borderColor: cores.borda,
+
     borderRadius: 10,
+
     backgroundColor: cores.painel,
+
     color: cores.texto,
   },
 
   botaoPequeno: {
     justifyContent: "center",
+
     paddingHorizontal: 17,
+
     borderRadius: 10,
+
     backgroundColor: "#382129",
   },
 
   botaoPequenoTexto: {
     color: cores.rosa,
+
     fontSize: 12,
+
     fontWeight: "600",
   },
 
   botao: {
     alignItems: "center",
+
     marginTop: 20,
+
     padding: 16,
+
     borderRadius: 12,
+
     backgroundColor: cores.cereja,
   },
 
   botaoTexto: {
     color: "#fff5f7",
+
     fontSize: 14,
+
     fontWeight: "700",
   },
 
   registro: {
     flexDirection: "row",
+
     alignItems: "center",
+
     justifyContent: "space-between",
+
     marginBottom: 10,
+
     padding: 17,
+
     borderWidth: 1,
+
     borderColor: "#412a33",
+
     borderRadius: 12,
+
     backgroundColor: cores.painel,
   },
 
   registroTitulo: {
     color: cores.texto,
+
     fontSize: 14,
+
     fontWeight: "600",
   },
 
   registroDetalhes: {
     marginTop: 5,
+
     color: cores.suave,
+
     fontSize: 11,
   },
 
   registroValor: {
     color: cores.rosa,
+
     fontSize: 14,
   },
 
   vazio: {
     padding: 20,
+
     color: cores.suave,
+
     textAlign: "center",
   },
 
   observacao: {
     marginTop: 25,
+
     color: "#806f75",
+
     fontSize: 10,
+
     lineHeight: 16,
+
     textAlign: "center",
   },
 
   voltar: {
     marginBottom: 20,
+
     color: cores.rosa,
+
     fontSize: 15,
   },
 
   tituloPagina: {
     color: cores.texto,
+
     fontFamily: "Georgia",
+
     fontSize: 31,
   },
 
   descricaoPagina: {
     marginTop: 8,
+
     marginBottom: 10,
+
     color: cores.suave,
+
     fontSize: 13,
+
     lineHeight: 19,
   },
 
@@ -844,74 +994,109 @@ const styles = StyleSheet.create({
 
   label: {
     marginBottom: 8,
+
     color: cores.suave,
+
     fontSize: 12,
   },
 
   campoComSufixo: {
     flexDirection: "row",
+
     alignItems: "center",
+
     borderWidth: 1,
+
     borderColor: cores.borda,
+
     borderRadius: 10,
+
     backgroundColor: cores.painel,
   },
 
   input: {
     flex: 1,
+
     padding: 14,
+
     color: cores.texto,
   },
 
   sufixo: {
     paddingRight: 14,
+
     color: cores.rosa,
+
     fontSize: 12,
   },
 
   informacao: {
     marginTop: 22,
+
     padding: 17,
+
     borderRadius: 10,
+
     backgroundColor: "#25141a",
   },
 
   informacaoTitulo: {
     color: cores.rosa,
+
     fontSize: 13,
+
     fontWeight: "600",
   },
 
   informacaoTexto: {
     marginTop: 7,
+
     color: cores.suave,
+
     fontSize: 11,
+
     lineHeight: 17,
   },
+
   botaoSecundario: {
     alignItems: "center",
+
     marginTop: 12,
+
     padding: 15,
+
     borderWidth: 1,
+
     borderColor: "#54303c",
+
     borderRadius: 12,
+
     backgroundColor: "#1d1519",
   },
 
   botaoSecundarioTexto: {
     color: "#e7a2b1",
+
     fontSize: 14,
+
     fontWeight: "600",
   },
 
   botaoConfiguracoes: {
     alignItems: "center",
+
     justifyContent: "center",
+
     width: 48,
+
     height: 48,
+
     borderWidth: 1,
+
     borderColor: "#54303c",
+
     borderRadius: 24,
+
     backgroundColor: "#1d1519",
   },
 
