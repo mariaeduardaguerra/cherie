@@ -435,7 +435,7 @@ export default function App() {
       <ScrollView contentContainerStyle={styles.conteudo}>
         <View style={styles.cabecalho}>
           <View>
-            <Text style={styles.marca}>Chérie</Text>
+            <Text style={styles.marca}>Chérie 🍒</Text>
             <Text style={styles.subtitulo}>Seu carro, seus cuidados.</Text>
           </View>
 
