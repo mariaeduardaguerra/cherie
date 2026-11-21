@@ -27,6 +27,11 @@
       "name": "Chérie",
       "shortName": "Chérie",
       "favicon": "./assets/icon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c5a9f6d3-e54b-48a5-8904-062fed214a0f"
+      }
     }
   }
 }
