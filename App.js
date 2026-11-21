@@ -491,7 +491,7 @@ export default function App() {
           <View>
             <Text style={styles.marca}>Chérie 🍒</Text>
 
-            <Text style={styles.subtitulo}>Seu carro, seus cuidados.</Text>
+              
           </View>
 
           <Pressable
